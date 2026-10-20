@@ -148,12 +148,29 @@ test('API uses authenticated GitHub requests and surfaces failures', async (cont
     request = { url, options };
     return new Response(JSON.stringify({ message: 'denied' }), { status: 403 });
   });
-  assert.throws(() => createApi(''), /GITHUB_TOKEN/);
+  assert.throws(() => createApi(''), /ISSUE_READ_TOKEN/);
   assert.throws(() => createApi('token', 'http://example.com'), /HTTPS/);
   await assert.rejects(createApi('test-token')('/user'), /403.*denied/);
   assert.equal(request.url.origin, 'https://api.github.com');
   assert.equal(request.options.headers.Authorization, 'Bearer test-token');
   assert.equal(request.options.redirect, 'error');
+});
+
+test('CLI fails explicitly when ISSUE_READ_TOKEN is missing', () => {
+  const script = fileURLToPath(new URL('./export-issues.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [script], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      ISSUE_READ_TOKEN: '',
+      GITHUB_REPOSITORY: repository,
+      EXPORT_QUERY: 'state:open',
+      EXPORT_DIRECTORY: os.tmpdir(),
+    },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Export failed: ISSUE_READ_TOKEN is required/);
+  assert.doesNotMatch(result.stdout, /Export complete/);
 });
 
 test('CLI exits unsuccessfully and lists invalid included and excluded labels', () => {
@@ -166,7 +183,7 @@ test('CLI exits unsuccessfully and lists invalid included and excluded labels', 
     encoding: 'utf8',
     env: {
       ...process.env,
-      GITHUB_TOKEN: 'test-token',
+      ISSUE_READ_TOKEN: 'test-token',
       GITHUB_REPOSITORY: repository,
       EXPORT_QUERY: 'label:missing -label:also-missing',
       EXPORT_DIRECTORY: os.tmpdir(),

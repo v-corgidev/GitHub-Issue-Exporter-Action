@@ -109,7 +109,7 @@ export function validateLabels(requested, available) {
 }
 
 export function createApi(token, apiUrl = 'https://api.github.com') {
-  if (!token) throw new Error('GITHUB_TOKEN is required.');
+  if (!token) throw new Error('ISSUE_READ_TOKEN is required.');
   const base = new URL(apiUrl);
   if (base.protocol !== 'https:') throw new Error('The GitHub API URL must use HTTPS.');
   return async (endpoint) => {
@@ -232,7 +232,7 @@ async function main() {
   const directory = process.env.EXPORT_DIRECTORY;
   if (!directory) throw new Error('EXPORT_DIRECTORY is required.');
   console.log(`Search query: ${JSON.stringify(prepared.query)}`);
-  const issues = await collectIssues(createApi(process.env.GITHUB_TOKEN), repository, prepared);
+  const issues = await collectIssues(createApi(process.env.ISSUE_READ_TOKEN), repository, prepared);
   await writeExport(directory, repository, prepared.query, issues);
   console.log(`Export complete: ${issues.length} issues.`);
   if (process.env.GITHUB_STEP_SUMMARY) {

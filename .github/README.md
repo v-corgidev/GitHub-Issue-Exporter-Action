@@ -1,12 +1,15 @@
 # Issue Exporter Workflow
 
-This is independent of the GitHub Pages app. No existing Pages files or PAT
-settings need to change.
+Use this as a reusable workflow from another repository by following the
+[main README](../README.md#use-in-your-repository). There is no need to copy
+this directory into the calling repository.
 
 ## Run and download
 
-1. Add this `.github` directory to the repository whose issues you want to export.
-   The workflow must be on its default branch to appear in the manual-run UI.
+1. Configure the caller workflow and `ISSUE_READ_TOKEN` secret as described in
+   the main README. The caller workflow must be on its default branch to appear
+   in the manual-run UI. To run directly in this exporter repository instead,
+   configure the same secret here; the export will contain this repository's issues.
 2. Open **Actions > Export issues > Run workflow**.
 3. Enter a required GitHub issue search query, for example:
 
@@ -33,6 +36,7 @@ ZIP can read it.
 ## Search behavior
 
 - The repository and owner come from `GITHUB_REPOSITORY`, not user inputs.
+  In a reusable workflow this identifies the calling repository.
 - `is:issue` is always applied. Pull-request queries are rejected.
 - If no `state:` qualifier is supplied, `state:open` is added. Use `state:closed`
   for closed issues. In particular, `is:closed` alone does not suppress this
@@ -58,15 +62,18 @@ No artifact is uploaded when validation or API requests fail.
 
 ## Authentication and permissions
 
-The workflow uses the automatically generated `GITHUB_TOKEN`, with only
-`contents: read` and `issues: read`. No PAT or app registration is needed.
-The token only grants access within the workflow's repository; installing this
-workflow in a fork does not grant access to a private upstream repository.
+The workflow requires the `ISSUE_READ_TOKEN` secret, passed explicitly by the
+caller. Use a fine-grained personal access token with access to the calling
+repository and **Issues: Read-only** permission (including label access).
+The exporter reads `ISSUE_READ_TOKEN` from its environment and fails if it is
+missing. The job declares `contents: read` and `issues: read`, but these job
+permissions do not grant additional access to the supplied token.
 Running it manually requires write access to the repository and Actions enabled.
 
-The workflow executes the exporter and its tests from the selected branch.
-Only run trusted branches. It uses GitHub-hosted Ubuntu runners and Node.js 22,
-with no npm dependencies.
+The workflow executes the exporter and its tests from this exporter repository's
+`main` branch, even when called from another repository or when the workflow
+reference is pinned to a commit. Only call workflow code you trust with your
+token. It uses GitHub-hosted Ubuntu runners and Node.js 22, with no npm dependencies.
 
 ## Tests
 

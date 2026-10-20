@@ -1,6 +1,16 @@
 name: Export issues
 
 on:
+  workflow_call:
+    inputs:
+      query:
+        description: 'GitHub issue search query for the calling repository'
+        required: true
+        type: string
+    secrets:
+      ISSUE_READ_TOKEN:
+        description: 'Token with read access to issues and labels in the calling repository'
+        required: true
   workflow_dispatch:
     inputs:
       query:
@@ -20,6 +30,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
+          repository: CorgiDev/GitHub-Issue-Exporter-Action
+          ref: main
           persist-credentials: false
 
       - name: Set up Node.js
@@ -33,7 +45,7 @@ jobs:
       - name: Export matching issues
         run: node .github/scripts/export-issues.mjs
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE_READ_TOKEN: ${{ secrets.ISSUE_READ_TOKEN }}
           EXPORT_QUERY: ${{ inputs.query }}
           EXPORT_DIRECTORY: ${{ runner.temp }}/issue-export
 
